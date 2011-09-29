@@ -1,7 +1,6 @@
 package Anki::Database;
 use utf8::all;
 use Encode 'decode_utf8';
-use List::MoreUtils 'uniq';
 use Any::Moose;
 use DBI;
 # ABSTRACT: interact with your Anki (ankisrs.net) database
@@ -30,13 +29,16 @@ sub readings_for {
     require Text::MeCab;
     my $mecab = Text::MeCab->new;
     my @readings;
+    my %seen;
+
     NODE: for (my $node = $mecab->parse($sentence); $node; $node = $node->next) {
         my @fields = split ',', decode_utf8 $node->feature;
         my $surface = decode_utf8 $node->surface;
         my $dict = $fields[6];
         next unless $dict =~ /\p{Han}/;
 
-        for my $word (uniq $dict, $surface) {
+        for my $word ($dict, $surface) {
+            next if $seen{$word}++;
             my $sth = $self->prepare("
                 select fields.value
                 from fields
