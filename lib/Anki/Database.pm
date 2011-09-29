@@ -60,6 +60,7 @@ sub readings_for {
 
             my ($reading) = $readings =~ /(?:<br>|\n|^)\Q$word\E【(.*?)】/;
             push @readings, [$word, $reading];
+            last;
         }
     }
     return @readings if wantarray;
