@@ -44,9 +44,11 @@ sub readings_for {
                 from fields
                     join fieldModels on (fields.fieldModelId = fieldModels.id)
                     join models on (fieldModels.modelId = models.id)
+                    join cards on (cards.factId = fields.factId)
                 where
                     models.name is '文'
                     and fieldModels.name like '%読み%'
+                    and cards.type > 0
                     and (
                         fields.value like ?
                         or fields.value like ?
