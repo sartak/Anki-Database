@@ -18,10 +18,7 @@ has dbh => (
         $dbh->{sqlite_unicode} = 1;
         $dbh
     },
-    handles => {
-        prepare => 'prepare_cached',
-        do      => 'do',
-    },
+    handles => ['prepare', 'do'],
 );
 
 1;
