@@ -7,7 +7,7 @@ use DBI;
 has file => (
     is       => 'ro',
     isa      => 'Str',
-    default  => sub { $ENV{ANKI_DECK} },
+    default  => sub { $ENV{ANKI2_DECK} },
 );
 
 has dbh => (
