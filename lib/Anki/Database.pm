@@ -6,6 +6,7 @@ use HTML::Entities;
 # ABSTRACT: interact with your Anki (ankisrs.net) database
 
 use Anki::Database::Field;
+use Anki::Database::Note;
 
 has file => (
     is       => 'ro',
@@ -40,6 +41,23 @@ sub each_field {
 
             $cb->($field);
         }
+    }
+}
+
+sub each_note {
+    my ($self, $cb) = @_;
+    my $sth = $self->prepare('
+        SELECT id, tags FROM notes
+    ;');
+    $sth->execute;
+
+    while (my ($id, $tags) = $sth->fetchrow_array) {
+        my $note = Anki::Database::Note->new(
+            id   => $id,
+            tags => [split ' ', $tags],
+        );
+
+        $cb->($note);
     }
 }
 
