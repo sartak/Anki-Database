@@ -147,6 +147,24 @@ sub first_reviews {
     return \%reviews;
 }
 
+sub day_reviews {
+    my ($self) = @_;
+
+    my $sth = $self->prepare('
+        SELECT date( (id/1000) - 4*3600, "unixepoch") AS day, COUNT(*)
+            FROM revlog
+            GROUP BY day
+    ;');
+    $sth->execute;
+
+    my %reviews;
+    while (my ($day, $count) = $sth->fetchrow_array) {
+        $reviews{$day} = $count;
+    }
+
+    return \%reviews;
+}
+
 no Any::Moose;
 __PACKAGE__->meta->make_immutable;
 1;
