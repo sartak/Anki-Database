@@ -8,6 +8,12 @@ has id => (
     required => 1,
 );
 
+has model_name => (
+    is       => 'ro',
+    isa      => 'Str',
+    required => 1,
+);
+
 has tags => (
     is       => 'ro',
     isa      => 'ArrayRef[Str]',
