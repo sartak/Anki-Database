@@ -105,12 +105,12 @@ sub each_card {
     my $models = $self->models;
 
     my $sth = $self->prepare('
-        SELECT cards.id, cards.type, notes.flds, notes.mid, cards.ord FROM cards
+        SELECT cards.id, cards.type, notes.flds, notes.mid, cards.ord, notes.tags FROM cards
             JOIN notes ON cards.nid = notes.id
     ;');
     $sth->execute;
 
-    while (my ($card_id, $type, $fields, $model_id, $ordinal) = $sth->fetchrow_array) {
+    while (my ($card_id, $type, $fields, $model_id, $ordinal, $tags) = $sth->fetchrow_array) {
         my $card = Anki::Database::Card->new(
             id      => $card_id,
             created => int($card_id / 1000),
@@ -118,6 +118,7 @@ sub each_card {
             model   => $models->{$model_id},
             fields  => $fields,
             ordinal => $ordinal,
+            tags    => $tags,
         );
 
         $cb->($card);

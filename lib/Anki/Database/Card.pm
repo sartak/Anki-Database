@@ -2,7 +2,10 @@ package Anki::Database::Card;
 use utf8::all;
 use Any::Moose;
 
-with 'Anki::Database::WithFields';
+with (
+    'Anki::Database::WithFields',
+    'Anki::Database::WithTags',
+);
 
 has id => (
     is       => 'ro',
