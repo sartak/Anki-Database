@@ -92,7 +92,7 @@ sub each_note {
         my $note = Anki::Database::Note->new(
             id    => $id,
             model => $models->{$model_id},
-            tags  => [split ' ', $tags],
+            tags  => $tags,
         );
 
         $cb->($note);
