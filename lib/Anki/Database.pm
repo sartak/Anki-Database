@@ -129,6 +129,23 @@ sub each_card {
     }
 }
 
+sub first_reviews {
+    my ($self) = @_;
+
+    my $sth = $self->prepare('
+        SELECT cid, MIN(id)
+            FROM revlog
+            GROUP BY cid
+    ;');
+    $sth->execute;
+
+    my %reviews;
+    while (my ($card_id, $review) = $sth->fetchrow_array) {
+        $reviews{$card_id} = $review;
+    }
+
+    return \%reviews;
+}
 
 no Any::Moose;
 __PACKAGE__->meta->make_immutable;
