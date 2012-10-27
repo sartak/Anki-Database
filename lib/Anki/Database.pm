@@ -35,7 +35,8 @@ has models => (
     default => sub {
         my %models;
         my $sth = shift->prepare('
-            SELECT models FROM col
+            SELECT models
+                FROM col
         ;');
         $sth->execute;
 
@@ -62,7 +63,8 @@ has models => (
 sub each_field {
     my ($self, $cb) = @_;
     my $sth = $self->prepare('
-        SELECT id, flds FROM notes
+        SELECT id, flds
+            FROM notes
     ;');
     $sth->execute;
 
@@ -84,7 +86,8 @@ sub each_note {
     my $models = $self->models;
 
     my $sth = $self->prepare('
-        SELECT id, tags, mid FROM notes
+        SELECT id, tags, mid
+            FROM notes
     ;');
     $sth->execute;
 
@@ -105,7 +108,8 @@ sub each_card {
     my $models = $self->models;
 
     my $sth = $self->prepare('
-        SELECT cards.id, cards.type, notes.flds, notes.mid, cards.ord, notes.tags FROM cards
+        SELECT cards.id, cards.type, notes.flds, notes.mid, cards.ord, notes.tags
+            FROM cards
             JOIN notes ON cards.nid = notes.id
     ;');
     $sth->execute;
