@@ -3,10 +3,12 @@ use utf8::all;
 use Any::Moose;
 use DBI;
 use HTML::Entities;
+use JSON ();
 # ABSTRACT: interact with your Anki (ankisrs.net) database
 
 use Anki::Database::Field;
 use Anki::Database::Note;
+use Anki::Database::Model;
 
 has file => (
     is       => 'ro',
@@ -23,6 +25,35 @@ has dbh => (
         $dbh
     },
     handles => ['prepare', 'do'],
+);
+
+has models => (
+    is      => 'ro',
+    isa     => 'HashRef',
+    lazy    => 1,
+    default => sub {
+        my %models;
+        my $sth = shift->prepare('
+            SELECT models FROM col
+        ;');
+        $sth->execute;
+
+        while (my ($models_json) = $sth->fetchrow_array) {
+            my $raw_models = JSON::decode_json($models_json);
+            for my $model_id (keys %$raw_models) {
+                my $details = $raw_models->{$model_id};
+                my ($name) = $details->{name} =~ /^(.*) \(.*\)$/;
+                $name ||= $details->{name};
+
+                $models{$model_id} = Anki::Database::Model->new(
+                    id   => $model_id,
+                    name => $name,
+                );
+            }
+        }
+
+        return \%models;
+    },
 );
 
 sub each_field {
