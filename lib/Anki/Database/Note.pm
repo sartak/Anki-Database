@@ -2,15 +2,17 @@ package Anki::Database::Note;
 use utf8::all;
 use Any::Moose;
 
+use Anki::Database::Model;
+
 has id => (
     is       => 'ro',
     isa      => 'Int',
     required => 1,
 );
 
-has model_name => (
+has model => (
     is       => 'ro',
-    isa      => 'Str',
+    isa      => 'Anki::Database::Model',
     required => 1,
 );
 
