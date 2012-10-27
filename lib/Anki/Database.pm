@@ -141,7 +141,7 @@ sub first_reviews {
 
     my %reviews;
     while (my ($card_id, $review) = $sth->fetchrow_array) {
-        $reviews{$card_id} = $review;
+        $reviews{$card_id} = $review / 1000;
     }
 
     return \%reviews;
