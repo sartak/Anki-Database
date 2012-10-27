@@ -8,6 +8,7 @@ use JSON ();
 
 use Anki::Database::Field;
 use Anki::Database::Note;
+use Anki::Database::Card;
 use Anki::Database::Model;
 
 has file => (
@@ -93,6 +94,23 @@ sub each_note {
         );
 
         $cb->($note);
+    }
+}
+
+sub each_card {
+    my ($self, $cb) = @_;
+
+    my $sth = $self->prepare('
+        SELECT id FROM cards
+    ;');
+    $sth->execute;
+
+    while (my ($id) = $sth->fetchrow_array) {
+        my $card = Anki::Database::Card->new(
+            id => $id,
+        );
+
+        $cb->($card);
     }
 }
 
