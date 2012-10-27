@@ -4,6 +4,8 @@ use Any::Moose;
 use DBI;
 # ABSTRACT: interact with your Anki (ankisrs.net) database
 
+use Anki::Database::Field;
+
 has file => (
     is       => 'ro',
     isa      => 'Str',
