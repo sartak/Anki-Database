@@ -88,10 +88,10 @@ sub each_note {
     ;');
     $sth->execute;
 
-    while (my ($id, $tags, $mid) = $sth->fetchrow_array) {
+    while (my ($id, $tags, $model_id) = $sth->fetchrow_array) {
         my $note = Anki::Database::Note->new(
             id    => $id,
-            model => $models->{$mid},
+            model => $models->{$model_id},
             tags  => [split ' ', $tags],
         );
 
