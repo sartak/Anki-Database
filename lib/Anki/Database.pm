@@ -107,7 +107,8 @@ sub each_card {
 
     while (my ($id) = $sth->fetchrow_array) {
         my $card = Anki::Database::Card->new(
-            id => $id,
+            id      => $id,
+            created => int($id / 1000),
         );
 
         $cb->($card);

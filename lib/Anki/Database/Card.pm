@@ -7,8 +7,12 @@ has id => (
     isa      => 'Int',
     required => 1,
 );
-sub created { $_[0]->{id} }
 
+has created => (
+    is       => 'ro',
+    isa      => 'Int',
+    required => 1,
+);
 
 no Any::Moose;
 __PACKAGE__->meta->make_immutable;
