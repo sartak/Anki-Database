@@ -2,6 +2,7 @@ package Anki::Database;
 use utf8::all;
 use Any::Moose;
 use DBI;
+use HTML::Entities;
 # ABSTRACT: interact with your Anki (ankisrs.net) database
 
 use Anki::Database::Field;
@@ -23,5 +24,27 @@ has dbh => (
     handles => ['prepare', 'do'],
 );
 
+sub each_field {
+    my ($self, $cb) = @_;
+    my $sth = $self->prepare('
+        SELECT id, flds FROM notes
+    ;');
+    $sth->execute;
+
+    while (my ($note_id, $fields) = $sth->fetchrow_array) {
+        for my $value (split "\x1f", $fields) {
+            my $field = Anki::Database::Field->new(
+                note_id => $note_id,
+                value   => decode_entities($value),
+            );
+
+            $cb->($field);
+        }
+    }
+}
+
+
+no Any::Moose;
+__PACKAGE__->meta->make_immutable;
 1;
 
