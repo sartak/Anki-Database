@@ -102,15 +102,22 @@ sub each_note {
 sub each_card {
     my ($self, $cb) = @_;
 
+    my $models = $self->models;
+
     my $sth = $self->prepare('
-        SELECT id FROM cards
+        SELECT cards.id, cards.type, notes.flds, notes.mid, cards.ord FROM cards
+            JOIN notes ON cards.nid = notes.id
     ;');
     $sth->execute;
 
-    while (my ($id) = $sth->fetchrow_array) {
+    while (my ($card_id, $type, $fields, $model_id, $ordinal) = $sth->fetchrow_array) {
         my $card = Anki::Database::Card->new(
-            id      => $id,
-            created => int($id / 1000),
+            id      => $card_id,
+            created => int($card_id / 1000),
+            type    => $type,
+            model   => $models->{$model_id},
+            fields  => $fields,
+            ordinal => $ordinal,
         );
 
         $cb->($card);
