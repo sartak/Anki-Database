@@ -14,6 +14,18 @@ has name => (
     required => 1,
 );
 
+has fields => (
+    is       => 'ro',
+    isa      => 'ArrayRef[Str]',
+    required => 1,
+);
+
+has templates => (
+    is       => 'ro',
+    isa      => 'ArrayRef[Str]',
+    required => 1,
+);
+
 no Any::Moose;
 __PACKAGE__->meta->make_immutable;
 1;

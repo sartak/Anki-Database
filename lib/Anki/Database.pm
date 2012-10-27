@@ -47,8 +47,10 @@ has models => (
                 $name ||= $details->{name};
 
                 $models{$model_id} = Anki::Database::Model->new(
-                    id   => $model_id,
-                    name => $name,
+                    id        => $model_id,
+                    name      => $name,
+                    fields    => [ map { $_->{name} } @{ $details->{flds} } ],
+                    templates => [ map { $_->{name} } @{ $details->{tmpls} } ],
                 );
             }
         }
