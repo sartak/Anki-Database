@@ -222,6 +222,20 @@ sub field_values {
     return @values;
 }
 
+sub last_new_card {
+    my ($self) = @_;
+
+    my $sth = $self->prepare("
+        SELECT id
+            FROM cards
+            WHERE type > 0
+            ORDER BY cards.id DESC
+            LIMIT 1
+    ;");
+    $sth->execute;
+    return ($sth->fetchrow_array)[0];
+}
+
 no Any::Moose;
 __PACKAGE__->meta->make_immutable;
 1;
