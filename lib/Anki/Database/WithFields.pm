@@ -8,6 +8,11 @@ has fields => (
     required => 1,
 );
 
+sub field {
+    my ($self, $name) = @_;
+    return $self->fields->{$name};
+}
+
 around BUILDARGS => sub {
     my $orig = shift;
     my $args = $orig->(@_);
