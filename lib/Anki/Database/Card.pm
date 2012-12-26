@@ -13,6 +13,12 @@ has id => (
     required => 1,
 );
 
+has note_id => (
+    is       => 'ro',
+    isa      => 'Int',
+    required => 1,
+);
+
 has model => (
     is       => 'ro',
     isa      => 'Anki::Database::Model',
