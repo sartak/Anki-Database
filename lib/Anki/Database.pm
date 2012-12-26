@@ -1,5 +1,7 @@
 package Anki::Database;
 use utf8::all;
+use List::Util 'first';
+use List::MoreUtils 'any';
 use Any::Moose;
 use DBI;
 use HTML::Entities;
@@ -59,6 +61,25 @@ has models => (
         return \%models;
     },
 );
+
+sub models_with_field {
+    my ($self, $field) = @_;
+    my @models;
+
+    for my $model (values %{ $self->models }) {
+        if (any { $_ eq $field } @{ $model->fields }) {
+            push @models, $model;
+        }
+    }
+
+    return @models;
+}
+
+sub model_named {
+    my ($self, $name) = @_;
+
+    return first { $_->name eq $name } values %{ $self->models };
+}
 
 sub each_field {
     my ($self, $cb) = @_;
