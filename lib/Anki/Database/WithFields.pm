@@ -1,6 +1,7 @@
 package Anki::Database::WithFields;
 use utf8::all;
 use Any::Moose 'Role';
+use HTML::Entities;
 
 has fields => (
     is       => 'ro',
@@ -21,7 +22,7 @@ around BUILDARGS => sub {
         my %fields;
 
         my @keys = @{ $args->{model}->fields };
-        my @values = split "\x1f", $args->{fields};
+        my @values = map { decode_entities($_) } split "\x1f", $args->{fields};
 
         @fields{@keys} = @values;
 
