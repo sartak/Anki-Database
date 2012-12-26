@@ -187,6 +187,41 @@ sub day_reviews {
     return \%reviews;
 }
 
+sub field_values {
+    my ($self, $field_name, $model_name) = @_;
+    my %index_of;
+    my @models;
+
+    if ($model_name) {
+        my $model = $self->model_named($model_name);
+        @models = $model;
+        $index_of{ $model->id } = $model->field_index($field_name);
+    }
+    else {
+        @models = $self->models_with_field($field_name);
+        for my $model (@models) {
+            $index_of{ $model->id } = $model->field_index($field_name);
+        }
+    }
+
+    my $mids = '(' . (join ', ', map { $_->id } @models) . ')';
+
+    my $sth = $self->prepare("
+        SELECT flds, mid
+            FROM notes
+            WHERE mid in $mids
+    ;");
+    $sth->execute;
+
+    my @values;
+    while (my ($fields, $mid) = $sth->fetchrow_array) {
+        my @fields = split "\x1f", $fields;
+        push @values, decode_entities($fields[ $index_of{$mid} ]);
+    }
+
+    return @values;
+}
+
 no Any::Moose;
 __PACKAGE__->meta->make_immutable;
 1;
