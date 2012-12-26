@@ -86,16 +86,17 @@ sub each_note {
     my $models = $self->models;
 
     my $sth = $self->prepare('
-        SELECT id, tags, mid
+        SELECT id, tags, flds, mid
             FROM notes
     ;');
     $sth->execute;
 
-    while (my ($id, $tags, $model_id) = $sth->fetchrow_array) {
+    while (my ($id, $tags, $fields, $model_id) = $sth->fetchrow_array) {
         my $note = Anki::Database::Note->new(
-            id    => $id,
-            model => $models->{$model_id},
-            tags  => $tags,
+            id     => $id,
+            model  => $models->{$model_id},
+            fields => $fields,
+            tags   => $tags,
         );
 
         $cb->($note);

@@ -5,6 +5,7 @@ use Any::Moose;
 use Anki::Database::Model;
 
 with (
+    'Anki::Database::WithFields',
     'Anki::Database::WithTags',
 );
 
