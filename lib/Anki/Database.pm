@@ -229,7 +229,6 @@ sub last_new_card {
     my $sth = $self->prepare("
         SELECT id
             FROM cards
-            WHERE type > 0
             ORDER BY cards.id DESC
             LIMIT 1
     ;");
