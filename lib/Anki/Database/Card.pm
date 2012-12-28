@@ -37,12 +37,12 @@ has template => (
     required => 1,
 );
 
-has type => (
+has queue => (
     is       => 'ro',
     isa      => 'Int',
     required => 1,
 );
-sub suspended { $_[0] < 2 }
+sub suspended { $_[0]->queue < 0 }
 
 around BUILDARGS => sub {
     my $orig = shift;
