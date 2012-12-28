@@ -23,7 +23,9 @@ has dbh => (
     is      => 'ro',
     lazy    => 1,
     default => sub {
-        my $dbh = DBI->connect("dbi:SQLite:dbname=" . shift->file);
+        my $dbh = DBI->connect("dbi:SQLite:dbname=" . shift->file, undef, undef, {
+            RaiseError => 1,
+        });
         $dbh->{sqlite_unicode} = 1;
         $dbh
     },
