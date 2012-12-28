@@ -190,6 +190,30 @@ sub day_reviews {
     return \%reviews;
 }
 
+sub card_scores {
+    my ($self, $card_id) = @_;
+
+    my $sth = $self->prepare('
+        SELECT ease, COUNT(ease)
+            FROM revlog
+            WHERE cid=?
+            GROUP BY ease
+    ;');
+    $sth->execute($card_id);
+
+    my ($right, $wrong) = (0, 0);
+    while (my ($ease, $count) = $sth->fetchrow_array) {
+        if ($ease == 1) {
+            $wrong += $count;
+        }
+        else {
+            $right += $count;
+        }
+    }
+
+    return ($right, $wrong);
+}
+
 sub field_values {
     my ($self, $field_name, $model_name) = @_;
     my %index_of;
