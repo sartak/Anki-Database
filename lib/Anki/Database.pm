@@ -85,16 +85,22 @@ sub model_named {
 
 sub each_field {
     my ($self, $cb) = @_;
+
+    my $models = $self->models;
+
     my $sth = $self->prepare('
-        SELECT id, flds
+        SELECT id, flds, mid
             FROM notes
     ;');
     $sth->execute;
 
-    while (my ($note_id, $fields) = $sth->fetchrow_array) {
+    while (my ($note_id, $fields, $model_id) = $sth->fetchrow_array) {
+        my $field_names = $models->{$model_id}->{fields};
+        my $i = 0;
         for my $value (split "\x1f", $fields) {
             my $field = Anki::Database::Field->new(
                 note_id => $note_id,
+                name    => $field_names->[$i++],
                 value   => decode_entities($value),
             );
 
