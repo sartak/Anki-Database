@@ -110,15 +110,25 @@ sub each_field {
 }
 
 sub each_note {
-    my ($self, $cb) = @_;
+    my ($self, $cb, @desired_models) = @_;
 
+    my %is_desired = map { $_ => 1 } @desired_models;
     my $models = $self->models;
+    my @mids = map { $_->id } grep { $is_desired{$_->name} } values %$models;
 
-    my $sth = $self->prepare('
+    my $query = '
         SELECT id, tags, flds, mid
             FROM notes
-    ;');
-    $sth->execute;
+    ';
+    if (@mids) {
+        $query .= 'WHERE mid IN (';
+        $query .= join ', ', map { '?' } @mids;
+        $query .= ')';
+    }
+    $query .= ';';
+
+    my $sth = $self->prepare($query);
+    $sth->execute(@mids);
 
     while (my ($id, $tags, $fields, $model_id) = $sth->fetchrow_array) {
         my $note = Anki::Database::Note->new(
