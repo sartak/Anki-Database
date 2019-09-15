@@ -189,14 +189,38 @@ sub first_reviews {
 }
 
 sub day_reviews {
-    my ($self) = @_;
+    my ($self, @desired_models) = @_;
 
-    my $sth = $self->prepare('
-        SELECT date( (id/1000) - 4*3600, "unixepoch") AS day, COUNT(*)
+    my %is_desired = map { $_ => 1 } @desired_models;
+    my $models = $self->models;
+    my @mids = map { $_->id } grep { $is_desired{$_->name} } values %$models;
+
+    if (@mids != @desired_models) {
+      delete @is_desired{map $_->name, values %$models};
+      warn "Mismatch on model names, are these spelled correctly: " . join ', ', sort keys %is_desired;
+      return {};
+    }
+
+    my $query = '
+        SELECT date(revlog.id/1000, "unixepoch") AS day, COUNT(*)
             FROM revlog
+    ';
+
+    if (@mids) {
+	$query .= '
+	  LEFT JOIN cards ON revlog.cid = cards.id
+	  LEFT JOIN notes ON cards.nid = notes.id
+	  WHERE notes.mid IN (';
+        $query .= join ', ', map { '?' } @mids;
+        $query .= ')';
+    }
+
+    $query .= '
             GROUP BY day
-    ;');
-    $sth->execute;
+    ';
+
+    my $sth = $self->prepare($query);
+    $sth->execute(@mids);
 
     my %reviews;
     while (my ($day, $count) = $sth->fetchrow_array) {
