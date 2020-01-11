@@ -202,6 +202,21 @@ sub first_reviews {
     return \%reviews;
 }
 
+sub reviews_for_card {
+    my ($self, $cid) = @_;
+    $cid = $cid->id if blessed $cid;
+
+    my $sth = $self->prepare('
+        SELECT id, ease, time, type
+            FROM revlog
+            WHERE cid=?
+            ORDER BY id ASC
+    ;');
+    $sth->execute($cid);
+
+    return $sth->fetchall_arrayref;
+}
+
 sub day_reviews {
     my ($self, @desired_models) = @_;
 
