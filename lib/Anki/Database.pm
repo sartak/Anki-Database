@@ -207,7 +207,7 @@ sub reviews_for_card {
     $cid = $cid->id if blessed $cid;
 
     my $sth = $self->prepare('
-        SELECT id, ease, time, type
+        SELECT id, ease, time, type, ivl
             FROM revlog
             WHERE cid=?
             ORDER BY id ASC
