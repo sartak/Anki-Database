@@ -116,6 +116,8 @@ sub each_note {
     my $models = $self->models;
     my @mids = map { $_->id } grep { $is_desired{$_->name} } values %$models;
 
+    confess("Mismatch in models: wanted @desired_models, got @mids") if @desired_models != @mids;
+
     my $query = '
         SELECT id, tags, flds, mid
             FROM notes
