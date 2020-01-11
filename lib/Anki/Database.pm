@@ -145,16 +145,28 @@ sub each_note {
 }
 
 sub each_card {
-    my ($self, $cb) = @_;
+    my ($self, $cb, @desired_models) = @_;
 
+    my %is_desired = map { $_ => 1 } @desired_models;
     my $models = $self->models;
+    my @mids = map { $_->id } grep { $is_desired{$_->name} } values %$models;
 
-    my $sth = $self->prepare('
+    confess("Mismatch in models: wanted @desired_models, got @mids") if @desired_models != @mids;
+
+    my $query = '
         SELECT cards.id, cards.queue, notes.flds, notes.id, notes.mid, cards.ord, notes.tags
             FROM cards
             JOIN notes ON cards.nid = notes.id
-    ;');
-    $sth->execute;
+    ';
+
+    if (@mids) {
+        $query .= 'WHERE mid IN (';
+        $query .= join ', ', map { '?' } @mids;
+        $query .= ')';
+    }
+
+    my $sth = $self->prepare($query);
+    $sth->execute(@mids);
 
     while (my ($card_id, $queue, $fields, $note_id, $model_id, $ordinal, $tags) = $sth->fetchrow_array) {
         my $card = Anki::Database::Card->new(
