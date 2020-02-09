@@ -240,6 +240,33 @@ sub reviews_for_card {
     return $sth->fetchall_arrayref;
 }
 
+sub reviews_for_deck {
+    my ($self, $deck) = @_;
+    my $did;
+
+    for my $id (keys %{ $self->decks }) {
+      if ($deck eq $id || $self->decks->{$id}->{name} eq $deck) {
+        $did = $id;
+      }
+    }
+
+    if (!$did) {
+      confess("No deck '$deck' found");
+    }
+
+    my $sth = $self->prepare('
+        SELECT
+	  revlog.id, revlog.ease, revlog.time, revlog.type, revlog.ivl
+        FROM revlog
+        LEFT JOIN cards ON revlog.cid = cards.id
+	WHERE cards.did = ?
+        ORDER BY revlog.id ASC
+    ;');
+    $sth->execute($did);
+
+    return $sth->fetchall_arrayref;
+}
+
 sub day_reviews {
     my ($self, @desired_models) = @_;
 
