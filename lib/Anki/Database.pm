@@ -256,7 +256,7 @@ sub reviews_for_deck {
 
     my $sth = $self->prepare('
         SELECT
-	  revlog.id, revlog.ease, revlog.time, revlog.type, revlog.ivl
+	  revlog.id, revlog.cid, revlog.ease, revlog.time, revlog.type, revlog.ivl
         FROM revlog
         LEFT JOIN cards ON revlog.cid = cards.id
 	WHERE cards.did = ?
