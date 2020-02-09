@@ -64,6 +64,29 @@ has models => (
     },
 );
 
+has decks => (
+    is      => 'ro',
+    isa     => 'HashRef',
+    lazy    => 1,
+    default => sub {
+        my %decks;
+        my $sth = shift->prepare('
+            SELECT decks
+                FROM col
+        ;');
+        $sth->execute;
+
+        while (my ($decks_json) = $sth->fetchrow_array) {
+            my $raw_decks = JSON::decode_json($decks_json);
+            for my $deck_id (keys %$raw_decks) {
+                $decks{$deck_id} = $raw_decks->{$deck_id};
+            }
+        }
+
+        return \%decks;
+    },
+);
+
 sub models_with_field {
     my ($self, $field) = @_;
     my @models;
