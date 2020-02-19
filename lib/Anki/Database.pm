@@ -240,15 +240,21 @@ sub reviews_for_card {
     return $sth->fetchall_arrayref;
 }
 
-sub reviews_for_deck {
-    my ($self, $deck) = @_;
-    my $did;
+sub id_for_deck {
+  my ($self, $deck) = @_;
+  my $did;
 
-    for my $id (keys %{ $self->decks }) {
-      if ($deck eq $id || $self->decks->{$id}->{name} eq $deck) {
-        $did = $id;
-      }
+  for my $id (keys %{ $self->decks }) {
+    if ($deck eq $id || $self->decks->{$id}->{name} eq $deck) {
+      $did = $id;
     }
+  }
+  return $did;
+}
+
+sub each_review_for_deck {
+    my ($self, $cb, $deck) = @_;
+    my $did = $self->id_for_deck($deck);
 
     if (!$did) {
       confess("No deck '$deck' found");
@@ -264,7 +270,20 @@ sub reviews_for_deck {
     ;');
     $sth->execute($did);
 
-    return $sth->fetchall_arrayref;
+    while (my $row = $sth->fetchrow_arrayref) {
+      $cb->($row);
+    }
+}
+
+sub reviews_for_deck {
+    my ($self, $deck) = @_;
+    my @reviews;
+
+    $self->each_review_for_deck(sub {
+      push @reviews, $_[0];
+    }, $deck);
+
+    return \@reviews;
 }
 
 sub day_reviews {
