@@ -207,6 +207,52 @@ sub each_card {
     }
 }
 
+sub each_card_for_deck {
+    my ($self, $cb, $deck, $id_only) = @_;
+
+    my $did = $self->id_for_deck($deck);
+
+    my $query = $id_only ? '
+        SELECT id
+	FROM cards
+	WHERE did=?
+	ORDER BY id ASC
+    ' : '
+        SELECT cards.id, cards.queue, notes.flds, notes.id, notes.mid, cards.ord, notes.tags
+        FROM cards
+        JOIN notes ON cards.nid = notes.id
+	WHERE cards.did=?
+	ORDER BY cards.id ASC
+    ';
+
+    my $sth = $self->prepare($query);
+    $sth->execute($did);
+
+    if ($id_only) {
+      while (my ($id) = $sth->fetchrow_array) {
+          $cb->($id);
+      }
+    }
+    else {
+      my $models = $self->models;
+
+      while (my ($card_id, $queue, $fields, $note_id, $model_id, $ordinal, $tags) = $sth->fetchrow_array) {
+          my $card = Anki::Database::Card->new(
+              id      => $card_id,
+              created => int($card_id / 1000),
+              queue   => $queue,
+              note_id => $note_id,
+              model   => $models->{$model_id},
+              fields  => $fields,
+              ordinal => $ordinal,
+              tags    => $tags,
+          );
+
+          $cb->($card);
+      }
+   }
+}
+
 sub first_reviews {
     my ($self) = @_;
 
