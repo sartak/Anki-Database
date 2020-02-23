@@ -253,6 +253,24 @@ sub each_card_for_deck {
    }
 }
 
+sub count_cards_in_deck {
+    my ($self, $deck) = @_;
+
+    my $did = $self->id_for_deck($deck);
+
+    my $query = '
+        SELECT COUNT(*)
+	FROM cards
+	WHERE did=?
+    ';
+
+    my $sth = $self->prepare($query);
+    $sth->execute($did);
+
+    my ($count) = $sth->fetchrow_array;
+    return $count;
+}
+
 sub first_reviews {
     my ($self) = @_;
 
@@ -319,6 +337,26 @@ sub each_review_for_deck {
     while (my $row = $sth->fetchrow_arrayref) {
       $cb->($row);
     }
+}
+
+sub count_reviews_for_deck {
+    my ($self, $deck) = @_;
+    my $did = $self->id_for_deck($deck);
+
+    if (!$did) {
+      confess("No deck '$deck' found");
+    }
+
+    my $sth = $self->prepare('
+        SELECT COUNT(*)
+        FROM revlog
+        LEFT JOIN cards ON revlog.cid = cards.id
+	WHERE cards.did = ?
+    ;');
+    $sth->execute($did);
+
+    my ($count) = $sth->fetchrow_array;
+    return $count;
 }
 
 sub reviews_for_deck {
