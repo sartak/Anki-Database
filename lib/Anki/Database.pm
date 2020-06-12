@@ -1,7 +1,7 @@
 package Anki::Database;
 use utf8::all;
 use List::Util 'first';
-use List::MoreUtils 'any';
+use List::MoreUtils 'any', 'first_index';
 use Any::Moose;
 use DBI;
 use HTML::Entities;
@@ -524,6 +524,62 @@ sub last_new_card {
     ;");
     $sth->execute;
     return ($sth->fetchrow_array)[0];
+}
+
+sub _wrap_query_value {
+    my ($index, $count, $value, $isPrimary) = @_;
+    my $start = '';
+    my $end = '';
+
+    $start = "%\x1f" if $index > 0;
+
+    if ($isPrimary) {
+      $end = "%";
+    } elsif ($index < $count - 1) {
+      $end = "\x1f%";
+    }
+
+    return $start . encode_entities($value, '<>&"') . $end;
+}
+
+sub autocomplete {
+    my ($self, $modelName, $fieldName, $fieldValue, %otherFields) = @_;
+
+    my $model = $self->model_named($modelName);
+    my @keys = @{ $model->fields };
+    my @checks;
+    my $primary = first_index { $_ eq $fieldName } @keys;
+    my $primaryValue = _wrap_query_value($primary, scalar(@keys), $fieldValue, 1);
+
+    for my $field (keys %otherFields) {
+      my $index = first_index { $_ eq $field } @keys;
+      my $otherValue = _wrap_query_value($index, scalar(@keys), $otherFields{$field}, 0);
+      push @checks, [$index, $otherFields{$field}, $otherValue];
+    }
+
+    my $sth = $self->prepare("
+      SELECT flds
+        FROM notes
+        WHERE mid=?
+	AND @{[ join ' AND ', map { 'flds LIKE ?' } $fieldValue, values %otherFields]}
+    ");
+    $sth->execute($model->id, $primaryValue, map { $_->[2] } @checks);
+
+    ROW: while (my ($fields) = $sth->fetchrow_array) {
+      my @values = split "\x1f", $fields;
+      for (@checks) {
+        my ($index, $expected) = @$_;
+	my $got = decode_entities($values[$index]);
+	next ROW unless $got eq $expected;
+      }
+
+      my $value = decode_entities($values[$primary]);
+      if (rindex($value, $fieldValue, 0) == 0) {
+        return $value;
+      }
+    }
+
+    return undef;
 }
 
 no Any::Moose;
