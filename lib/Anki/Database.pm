@@ -527,13 +527,13 @@ sub last_new_card {
 }
 
 sub _wrap_query_value {
-    my ($index, $count, $value, $isPrimary) = @_;
+    my ($index, $count, $value, $isPrefix) = @_;
     my $start = '';
     my $end = '';
 
     $start = "%\x1f" if $index > 0;
 
-    if ($isPrimary) {
+    if ($isPrefix) {
       $end = "%";
     } elsif ($index < $count - 1) {
       $end = "\x1f%";
@@ -543,43 +543,70 @@ sub _wrap_query_value {
 }
 
 sub autocomplete {
-    my ($self, $modelName, $fieldName, $fieldValue, %otherFields) = @_;
+    my $self = shift;
+    my ($modelName, $fieldName, $fieldValue, %rest) = @_;
+    my $note = $self->find_notes($modelName, $fieldName => \$fieldValue, %rest);
+    if ($note) {
+      return $note->field($fieldName);
+    }
+    return;
+}
+
+sub find_notes {
+    my ($self, $modelName, %fields) = @_;
 
     my $model = $self->model_named($modelName);
     my @keys = @{ $model->fields };
     my @checks;
-    my $primary = first_index { $_ eq $fieldName } @keys;
-    my $primaryValue = _wrap_query_value($primary, scalar(@keys), $fieldValue, 1);
 
-    for my $field (keys %otherFields) {
+    for my $field (keys %fields) {
       my $index = first_index { $_ eq $field } @keys;
-      my $otherValue = _wrap_query_value($index, scalar(@keys), $otherFields{$field}, 0);
-      push @checks, [$index, $otherFields{$field}, $otherValue];
+      my $value = $fields{$field};
+      my $queryValue = _wrap_query_value($index, scalar(@keys), (ref($value) ? $$value : $value), ref($value));
+      push @checks, [$index, $value, $queryValue];
     }
 
     my $sth = $self->prepare("
-      SELECT flds
+      SELECT id, tags, flds
         FROM notes
         WHERE mid=?
-	AND @{[ join ' AND ', map { 'flds LIKE ?' } $fieldValue, values %otherFields]}
+        AND @{[ join ' AND ', map { 'flds LIKE ?' } @checks]}
     ");
-    $sth->execute($model->id, $primaryValue, map { $_->[2] } @checks);
+    $sth->execute($model->id, map { $_->[2] } @checks);
 
-    ROW: while (my ($fields) = $sth->fetchrow_array) {
+    my @notes;
+
+    ROW: while (my ($nid, $tags, $fields) = $sth->fetchrow_array) {
       my @values = split "\x1f", $fields;
       for (@checks) {
         my ($index, $expected) = @$_;
 	my $got = decode_entities($values[$index]);
-	next ROW unless $got eq $expected;
+	if (ref($expected)) {
+          next ROW if rindex($got, $$expected, 0) != 0;
+	} else {
+	  next ROW if $got ne $expected;
+	}
       }
 
-      my $value = decode_entities($values[$primary]);
-      if (rindex($value, $fieldValue, 0) == 0) {
-        return $value;
+      my $note = Anki::Database::Note->new(
+          id     => $nid,
+          model  => $model,
+          fields => $fields,
+          tags   => $tags,
+      );
+
+      if (!wantarray) {
+        return $note;
       }
+
+      push @notes, $note;
     }
 
-    return undef;
+    if (!@notes) {
+      return;
+    }
+
+    return @notes;
 }
 
 no Any::Moose;
