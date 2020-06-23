@@ -208,25 +208,27 @@ sub each_card {
 }
 
 sub each_card_for_deck {
-    my ($self, $cb, $deck, $id_only) = @_;
+    my ($self, $cb, $deck, $id_only, $after_cid) = @_;
 
     my $did = $self->id_for_deck($deck);
 
-    my $query = $id_only ? '
+    my $query = $id_only ? "
         SELECT id
 	FROM cards
 	WHERE did=?
+	@{[ $after_cid ? 'AND id > ?' : '' ]}
 	ORDER BY id ASC
-    ' : '
+    " : "
         SELECT cards.id, cards.queue, notes.flds, notes.id, notes.mid, cards.ord, notes.tags
         FROM cards
         JOIN notes ON cards.nid = notes.id
 	WHERE cards.did=?
+	@{[ $after_cid ? 'AND cards.id > ?' : '' ]}
 	ORDER BY cards.id ASC
-    ';
+    ";
 
     my $sth = $self->prepare($query);
-    $sth->execute($did);
+    $sth->execute($did, ($after_cid ? $after_cid : ()));
 
     if ($id_only) {
       while (my ($id) = $sth->fetchrow_array) {
