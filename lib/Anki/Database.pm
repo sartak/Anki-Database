@@ -317,22 +317,23 @@ sub id_for_deck {
 }
 
 sub each_review_for_deck {
-    my ($self, $cb, $deck) = @_;
+    my ($self, $cb, $deck, $after_review) = @_;
     my $did = $self->id_for_deck($deck);
 
     if (!$did) {
       confess("No deck '$deck' found");
     }
 
-    my $sth = $self->prepare('
+    my $sth = $self->prepare("
         SELECT
 	  revlog.id, revlog.cid, revlog.ease, revlog.time, revlog.type, revlog.ivl
         FROM revlog
         LEFT JOIN cards ON revlog.cid = cards.id
 	WHERE cards.did = ?
+	@{[ $after_review ? 'AND revlog.id > ?' : '' ]}
         ORDER BY revlog.id ASC
-    ;');
-    $sth->execute($did);
+    ;");
+    $sth->execute($did, ($after_review ? $after_review : ()));
 
     while (my $row = $sth->fetchrow_arrayref) {
       $cb->($row);
