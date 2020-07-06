@@ -573,9 +573,9 @@ sub find_notes {
       SELECT id, tags, flds
         FROM notes
         WHERE mid=?
-        AND @{[ join ' AND ', map { 'flds LIKE ?' } @checks]}
+        AND @{[ join ' AND ', map { '(flds LIKE ? OR flds=?)' } @checks]}
     ");
-    $sth->execute($model->id, map { $_->[2] } @checks);
+    $sth->execute($model->id, map { ($_->[2], ref($_->[1]) ? ${$_->[1]} : $_->[1]) } @checks);
 
     my @notes;
 
