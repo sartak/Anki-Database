@@ -6,12 +6,15 @@ use Any::Moose;
 use DBI;
 use HTML::Entities;
 use JSON ();
+use Encode 'encode_utf8';
 # ABSTRACT: interact with your Anki (ankisrs.net) database
 
 use Anki::Database::Field;
 use Anki::Database::Note;
 use Anki::Database::Card;
 use Anki::Database::Model;
+
+my $JSON = JSON->new->utf8;
 
 has file => (
     is       => 'ro',
@@ -45,7 +48,7 @@ has models => (
         $sth->execute;
 
         while (my ($models_json) = $sth->fetchrow_array) {
-            my $raw_models = JSON::decode_json($models_json);
+            my $raw_models = $JSON->decode(encode_utf8 $models_json);
             for my $model_id (keys %$raw_models) {
                 my $details = $raw_models->{$model_id};
                 my ($name) = $details->{name} =~ /^(.*) \(.*\)$/;
@@ -77,7 +80,7 @@ has decks => (
         $sth->execute;
 
         while (my ($decks_json) = $sth->fetchrow_array) {
-            my $raw_decks = JSON::decode_json($decks_json);
+            my $raw_decks = $JSON->decode(encode_utf8 $decks_json);
             for my $deck_id (keys %$raw_decks) {
                 $decks{$deck_id} = $raw_decks->{$deck_id};
             }
