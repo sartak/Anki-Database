@@ -533,16 +533,20 @@ sub last_new_card {
 }
 
 sub _wrap_query_value {
-    my ($index, $count, $value, $isPrefix) = @_;
+    my ($index, $like, $count, $value, $isPrefix) = @_;
     my $start = '';
     my $end = '';
 
-    $start = "%\x1f" if $index > 0;
+    if ($like) {
+      $start = $end = "%";
+    } else {
+      $start = "%\x1f" if $index > 0;
 
-    if ($isPrefix) {
-      $end = "%";
-    } elsif ($index < $count - 1) {
-      $end = "\x1f%";
+      if ($isPrefix) {
+        $end = "%";
+      } elsif ($index < $count - 1) {
+        $end = "\x1f%";
+      }
     }
 
     return $start . encode_entities($value, '<>&"') . $end;
@@ -559,7 +563,10 @@ sub autocomplete {
 }
 
 sub find_notes {
-    my ($self, $modelName, %fields) = @_;
+    my $self = shift;
+    my $modelName = shift;
+    my $like = @_ % 2 == 1 ? shift : 0;
+    my %fields = @_;
 
     my $model = $self->model_named($modelName);
     my @keys = @{ $model->fields };
@@ -568,7 +575,7 @@ sub find_notes {
     for my $field (keys %fields) {
       my $index = first_index { $_ eq $field } @keys;
       my $value = $fields{$field};
-      my $queryValue = _wrap_query_value($index, scalar(@keys), (ref($value) ? $$value : $value), ref($value));
+      my $queryValue = _wrap_query_value($index, $like && ref($value), scalar(@keys), (ref($value) ? $$value : $value), ref($value));
       push @checks, [$index, $value, $queryValue];
     }
 
@@ -588,7 +595,11 @@ sub find_notes {
         my ($index, $expected) = @$_;
 	my $got = decode_entities($values[$index]);
 	if (ref($expected)) {
-          next ROW if rindex($got, $$expected, 0) != 0;
+          if ($like) {
+            next ROW if index($got, $$expected) == -1;
+          } else {
+            next ROW if rindex($got, $$expected, 0) != 0;
+          }
 	} else {
 	  next ROW if $got ne $expected;
 	}
