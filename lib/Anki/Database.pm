@@ -562,9 +562,10 @@ sub autocomplete {
     return;
 }
 
-sub find_notes {
+sub find_notes_each {
     my $self = shift;
     my $modelName = shift;
+    my $callback = pop;
     my $like = @_ % 2 == 1 ? shift : 0;
     my %fields = @_;
 
@@ -586,8 +587,6 @@ sub find_notes {
         AND @{[ join ' AND ', map { '(flds LIKE ? OR flds=?)' } @checks]}
     ");
     $sth->execute($model->id, map { ($_->[2], ref($_->[1]) ? ${$_->[1]} : $_->[1]) } @checks);
-
-    my @notes;
 
     ROW: while (my ($nid, $tags, $fields) = $sth->fetchrow_array) {
       my @values = split "\x1f", $fields;
@@ -612,18 +611,35 @@ sub find_notes {
           tags   => $tags,
       );
 
-      if (!wantarray) {
-        return $note;
-      }
+      $callback->($note);
+    }
+}
 
-      push @notes, $note;
+sub find_notes {
+    my $self = shift;
+
+    if (wantarray) {
+        my @notes;
+        $self->find_notes_each(@_, sub {
+            push @notes, shift;
+        });
+        return @notes;
     }
 
-    if (!@notes) {
-      return;
+    eval {
+        $self->find_notes_each(@_, sub {
+            die shift;
+        });
+    };
+
+    if ($@) {
+        if (ref($@) && $@->isa('Anki::Database::Note')) {
+	    return $@;
+	}
+	die $@;
     }
 
-    return @notes;
+    return;
 }
 
 no Any::Moose;
