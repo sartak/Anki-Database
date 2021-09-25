@@ -2,7 +2,7 @@ package Anki::Database;
 use utf8::all;
 use List::Util 'first';
 use List::MoreUtils 'any', 'first_index';
-use Any::Moose;
+{ no warnings 'deprecated'; use Any::Moose; }
 use DBI;
 use HTML::Entities;
 use JSON ();
